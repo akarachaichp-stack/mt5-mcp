@@ -29,7 +29,7 @@ No TradingView account API, no scraping, no browser extension — it talks to th
 ## Install
 
 ```bash
-git clone https://github.com/YOUR_USER/tradingview-desktop-mcp
+git clone https://github.com/Unjoselo/tradingview-desktop-mcp
 cd tradingview-desktop-mcp
 pip install -r requirements.txt
 ```
