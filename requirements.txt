@@ -1,5 +1,4 @@
 mcp>=1.0.0
-requests>=2.31
-websocket-client>=1.7
-# MT5 server + signal bridge only (Windows-only package):
+numpy>=1.24
+# Windows-only package:
 MetaTrader5>=5.0.45
