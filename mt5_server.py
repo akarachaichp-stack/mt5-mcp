@@ -88,6 +88,12 @@ def _ok(data: Any) -> str:
     return json.dumps(data, ensure_ascii=False, indent=1, default=str)
 
 
+def _direction(direction: str) -> str:
+    """Normalize LONG/SHORT, also accepting BUY/SELL."""
+    d = direction.strip().upper()
+    return {"BUY": "LONG", "SELL": "SHORT"}.get(d, d)
+
+
 def _ts(seconds: int) -> str:
     return datetime.fromtimestamp(seconds, tz=timezone.utc).isoformat()
 
@@ -473,9 +479,9 @@ def mt5_calc(symbol: str, direction: str, lot: float,
     currency, reward:risk ratio, and the free margin left. entry=0 uses the current
     ask (LONG) / bid (SHORT)."""
     _connect()
-    direction = direction.upper()
+    direction = _direction(direction)
     if direction not in ("LONG", "SHORT"):
-        return _ok({"error": "direction must be LONG or SHORT"})
+        return _ok({"error": "direction must be LONG or SHORT (BUY/SELL also accepted)"})
     if not mt5.symbol_select(symbol, True):
         return _ok({"error": f"symbol '{symbol}' not found"})
     tick = mt5.symbol_info_tick(symbol)
@@ -526,14 +532,14 @@ def mt5_orders(symbol: str = "", magic: int = 0) -> str:
 def mt5_order_open(symbol: str, direction: str, lot: float,
                    sl: float = 0.0, tp: float = 0.0,
                    magic: int = 777000, comment: str = "mcp", deviation: int = 0) -> str:
-    """Open a market position. direction: 'LONG' or 'SHORT'. sl/tp are absolute prices (0 = none).
+    """Open a market position. direction: 'LONG' or 'SHORT' (BUY/SELL accepted). sl/tp are absolute prices (0 = none).
     deviation = max slippage in points (0 = auto: 2x current spread, min 30).
     DEMO-ONLY unless the server was started with MT5_ALLOW_REAL=1."""
     _connect()
     _guard_trading()
-    direction = direction.upper()
+    direction = _direction(direction)
     if direction not in ("LONG", "SHORT"):
-        return _ok({"error": "direction must be LONG or SHORT"})
+        return _ok({"error": "direction must be LONG or SHORT (BUY/SELL also accepted)"})
     if not mt5.symbol_select(symbol, True):
         return _ok({"error": f"symbol '{symbol}' not found"})
     tick = mt5.symbol_info_tick(symbol)
@@ -713,7 +719,7 @@ def mt5_history(days: int = 7, symbol: str = "", magic: int = 0) -> str:
             "time": _ts(d.time),
             "symbol": d.symbol, "type": "BUY" if d.type == 0 else "SELL",
             "entry_or_exit": DEAL_ENTRY_NAMES.get(d.entry, d.entry),
-            "volume": d.volume, "price": d.price,
+            "volume": d.volume, "price": round(d.price, 6),
             "profit": d.profit, "commission": d.commission, "swap": d.swap, "fee": fee,
             "net": round(d.profit + d.commission + d.swap + fee, 2),
             "magic": d.magic, "ticket": d.ticket, "position_id": d.position_id,
